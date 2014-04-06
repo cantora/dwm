@@ -39,9 +39,11 @@
 #ifdef XINERAMA
 #include <X11/extensions/Xinerama.h>
 #endif /* XINERAMA */
+#include <pthread.h>
 
 #include "drw.h"
 #include "util.h"
+#include "dwm_cbs.h"
 
 /* macros */
 #define BUTTONMASK              (ButtonPressMask|ButtonReleaseMask)
@@ -2043,8 +2045,27 @@ zoom(const Arg *arg) {
 	pop(c);
 }
 
+void *
+timer_thread(void *user) {
+	while(1) {
+		dwm_cb_timer(dpy);
+		sleep(1);
+	}
+
+	return NULL;
+}
+
 int
 main(int argc, char *argv[]) {
+	pthread_attr_t pt_attr;
+	pthread_t thread;
+	(void)(focusmon);
+	(void)(focusstack);
+	(void)(incnmaster);
+	(void)(setmfact);
+	(void)(tagmon);
+	(void)(togglebar);
+
 	if(argc == 2 && !strcmp("-v", argv[1]))
 		die("dwm-"VERSION", © 2006-2012 dwm engineers, see LICENSE for details\n");
 	else if(argc != 1)
@@ -2053,10 +2074,20 @@ main(int argc, char *argv[]) {
 		fputs("warning: no locale support\n", stderr);
 	if(!(dpy = XOpenDisplay(NULL)))
 		die("dwm: cannot open display\n");
+	if(pthread_attr_init(&pt_attr) != 0)
+		die("dwm: cannot init pthread attr object\n");
+	if(pthread_attr_setdetachstate(&pt_attr, PTHREAD_CREATE_DETACHED) != 0)
+		die("dwm: cannot set pthread attr detach state\n");
+
 	checkotherwm();
 	setup();
 	scan();
+
+	if(pthread_create(&thread, &pt_attr, timer_thread, NULL) != 0)
+		die("dwm: cannot create timer thread\n");
 	run();
+
+	pthread_attr_destroy(&pt_attr);
 	cleanup();
 	XCloseDisplay(dpy);
 	return EXIT_SUCCESS;

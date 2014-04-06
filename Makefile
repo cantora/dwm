@@ -3,7 +3,8 @@
 
 include config.mk
 
-SRC = drw.c dwm.c util.c
+LIBS += -pthread
+SRC = drw.c dwm.c util.c dwm_cbs.c dwm_status.c
 OBJ = ${SRC:.c=.o}
 
 all: options dwm
