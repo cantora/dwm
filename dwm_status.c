@@ -8,6 +8,7 @@
 
 static void setstatus(Display *display, const char *str) {
 	XStoreName(display, DefaultRootWindow(display), str);
+	XFlush(display);
 }
 
 static int datetime(char *buf, size_t bufsize) {
