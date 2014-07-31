@@ -184,7 +184,7 @@ static void mappingnotify(XEvent *e);
 static void maprequest(XEvent *e);
 static void monocle(Monitor *m);
 static void motionnotify(XEvent *e);
-/*static void movemouse(const Arg *arg);*/
+static void movemouse(const Arg *arg);
 static Client *nexttiled(Client *c);
 static void pop(Client *);
 static void propertynotify(XEvent *e);
@@ -1119,7 +1119,6 @@ motionnotify(XEvent *e) {
 	mon = m;
 }
 
-#if 0
 void
 movemouse(const Arg *arg) {
 	int x, y, ocx, ocy, nx, ny;
@@ -1176,7 +1175,6 @@ movemouse(const Arg *arg) {
 		focus(NULL);
 	}
 }
-#endif /* if 0 comment */
 
 Client *
 nexttiled(Client *c) {
