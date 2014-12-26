@@ -1354,14 +1354,38 @@ restack(Monitor *m) {
 		warp(m->sel);
 }
 
+void *
+timer_thread(void *user) {
+	while(1) {
+		dwm_cb_timer(dpy);
+		sleep(1);
+	}
+
+	return NULL;
+}
+
 void
 run(void) {
+	pthread_attr_t pt_attr;
+	pthread_t thread;
 	XEvent ev;
-	/* main event loop */
+
+	if(pthread_attr_init(&pt_attr) != 0)
+		die("dwm: cannot init pthread attr object\n");
+	if(pthread_attr_setdetachstate(&pt_attr, PTHREAD_CREATE_DETACHED) != 0)
+		die("dwm: cannot set pthread attr detach state\n");
+
 	XSync(dpy, False);
+
+	if(pthread_create(&thread, &pt_attr, timer_thread, NULL) != 0)
+		die("dwm: cannot create timer thread\n");
+
+	/* main event loop */
 	while(running && !XNextEvent(dpy, &ev))
 		if(handler[ev.type])
 			handler[ev.type](&ev); /* call handler */
+
+	pthread_attr_destroy(&pt_attr);
 }
 
 void
@@ -2086,20 +2110,8 @@ zoom(const Arg *arg) {
 	pop(c);
 }
 
-void *
-timer_thread(void *user) {
-	while(1) {
-		dwm_cb_timer(dpy);
-		sleep(1);
-	}
-
-	return NULL;
-}
-
 int
 main(int argc, char *argv[]) {
-	pthread_attr_t pt_attr;
-	pthread_t thread;
 	(void)(focusmon);
 	(void)(focusstack);
 	(void)(incnmaster);
@@ -2115,20 +2127,13 @@ main(int argc, char *argv[]) {
 		fputs("warning: no locale support\n", stderr);
 	if(!(dpy = XOpenDisplay(NULL)))
 		die("dwm: cannot open display\n");
-	if(pthread_attr_init(&pt_attr) != 0)
-		die("dwm: cannot init pthread attr object\n");
-	if(pthread_attr_setdetachstate(&pt_attr, PTHREAD_CREATE_DETACHED) != 0)
-		die("dwm: cannot set pthread attr detach state\n");
 
 	checkotherwm();
 	setup();
 	scan();
 
-	if(pthread_create(&thread, &pt_attr, timer_thread, NULL) != 0)
-		die("dwm: cannot create timer thread\n");
 	run();
 
-	pthread_attr_destroy(&pt_attr);
 	cleanup();
 	XCloseDisplay(dpy);
 	return EXIT_SUCCESS;
