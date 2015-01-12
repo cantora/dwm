@@ -1356,6 +1356,7 @@ restack(Monitor *m) {
 
 void *
 timer_thread(void *user) {
+	sleep(2);
 	while(1) {
 		dwm_cb_timer(dpy);
 		sleep(1);
